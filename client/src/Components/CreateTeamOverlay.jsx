@@ -7,7 +7,7 @@ import DialogContent from "@mui/material/DialogContent"
 import DialogContentText from "@mui/material/DialogContentText"
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material"
 import { useRecoilState } from "recoil"
-import { companyState, userState } from "../globalstate"
+import { companyState, errorState, userState } from "../globalstate"
 import { display, width } from "@mui/system"
 import api from "../Services/api"
 import { createTeam, addTeamToCompany } from "../Services/teams"
@@ -15,6 +15,8 @@ import { createTeam, addTeamToCompany } from "../Services/teams"
 const CreateTeamOverlay = () => {
   const [company, setCompany] = useRecoilState(companyState)
   const [user, setUser] = useRecoilState(userState)
+  const [error, setError] = useRecoilState(errorState)
+
   const [open, setOpen] = React.useState(false)
   const [teamName, setTeamName] = React.useState("")
   const [description, setDescription] = React.useState("")
@@ -23,6 +25,10 @@ const CreateTeamOverlay = () => {
 
   const [newTeam, setNewTeam] = React.useState(null)
   const [teamAdded, setTeamAdded] = React.useState(false)
+
+  const labelStyle = {
+    marginBottom: "15px",
+  }
 
   React.useEffect(() => {
     // console.log("start set company")
@@ -62,37 +68,61 @@ const CreateTeamOverlay = () => {
   }
 
   const handleClose = () => {
+    setError({ isError: false, message: "" })
     setOpen(false)
   }
 
   const submitTeam = async (event) => {
     console.log("info: ", teamName, description, selectedMembers)
-    if (teamName && description && selectedMembers.length > 0) {
-      const teamDto = {
-        name: teamName,
-        description: description,
-        teammates: selectedMembers,
+    if (teamName === "" || description === "") {
+      setError({
+        isError: true,
+        message: "Team name and description required.",
+      })
+      return
+    }
+    console.log(selectedMembers.length)
+    if (selectedMembers.length === 0) {
+      setError({ isError: true, message: "At least one team member required." })
+      return
+    }
+
+    const teamDto = {
+      name: teamName,
+      description: description,
+      teammates: selectedMembers,
+    }
+    console.log(teamDto)
+
+    const response = await createTeam(user.id, company.id, teamDto).catch(
+      (err) => {
+        setError({ isError: true, message: "Invalid username or password" })
       }
-      console.log(teamDto)
-      setNewTeam(await createTeam(user.id, company.id, teamDto))
-      console.log(newTeam)
+    )
+
+    if (!response) {
+      setError({ isError: true, message: "No Response From Server" })
+    } else if (response) {
+      setError({ isError: false, message: "" })
+      console.log(response)
+      setNewTeam(response)
       setTeamName("")
       setDescription("")
       setSelectedMembers([])
+      handleClose()
     }
-    handleClose()
   }
 
-  const handleChange = (event) => {
-    console.log(event)
-    const {
-      target: { value },
-    } = event
-    console.log(Object.entries(value))
-    console.log(value.id)
-    !selectedMembers.map((user) => user.id).includes(value.id) &&
-      setSelectedMembers([...selectedMembers, value])
-  }
+  // const handleChange = (event) => {
+  //   console.log(event)
+  //   const {
+  //     target: { value },
+  //   } = event
+  //   console.log(Object.entries(value))
+  //   console.log(value.id)
+  //   !selectedMembers.map((user) => user.id).includes(value.id) &&
+  //     setSelectedMembers([...selectedMembers, value])
+  // }
 
   const handleMemberSelected = (event) => {
     console.log(JSON.parse(event.target.value))
@@ -101,12 +131,8 @@ const CreateTeamOverlay = () => {
     !selectedMembers.map((user) => user.id).includes(value.id) &&
       setSelectedMembers([...selectedMembers, value])
     // setSelectValue(event.target.value)
+    setError({ isError: false, message: "" })
   }
-
-  // React.useEffect(() => {
-  //   !selectedMembers.map((user) => user.id).includes(selectValue.id) &&
-  //     setSelectedMembers([...selectedMembers, selectValue])
-  // }, [selectValue])
 
   const handleRemoveMember = (event) => {
     // console.log(event.target.dataset.id)
@@ -114,10 +140,6 @@ const CreateTeamOverlay = () => {
       selectedMembers.filter((member) => member.id != event.target.dataset.id)
     )
   }
-
-  // const StyledTextField = styled(TextField)({
-  //   color: "#DEB992",
-  // })
 
   return (
     <>
@@ -168,13 +190,11 @@ const CreateTeamOverlay = () => {
           New Team
         </span>
       </Button>
-      <Dialog open={open} onClose={handleClose}>
-        {/* sx={{
-        background: "#0B2D45",
-        borderRadius: '20px',
-        color: '#DEB992',
-      }} */}
-        
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        PaperProps={{ sx: { borderRadius: "20px", background: "#0B2D45" } }}
+      >
         <div
           style={{
             background: "#0B2D45",
@@ -183,25 +203,25 @@ const CreateTeamOverlay = () => {
             // marginTop: '75px'
           }}
         >
-        <button
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            width: "55px",
-            height: "50px",
-            color: "#F24E1E",
-            border: "4px solid #F24E1E",
-            borderRadius: "50%",
-            background: "none",
-            fontWeight: "bolder",
-            fontSize: '2rem',
-            cursor: "pointer",
-          }}
-          onClick={handleClose}
-        >
-          X
-        </button>
+          <button
+            style={{
+              position: "absolute",
+              top: "10px",
+              right: "10px",
+              width: "50px",
+              height: "50px",
+              color: "#F24E1E",
+              border: "4px solid #F24E1E",
+              borderRadius: "50%",
+              background: "none",
+              fontWeight: "bolder",
+              fontSize: "2rem",
+              cursor: "pointer",
+            }}
+            onClick={handleClose}
+          >
+            X
+          </button>
           <div
             style={{
               display: "flex",
@@ -209,16 +229,23 @@ const CreateTeamOverlay = () => {
               color: "#DEB992",
             }}
           >
-            <label>Team Name</label>
+            <label style={labelStyle}>Team Name</label>
             <input
               id='team-name'
               label='Team Name'
               type='text'
               value={teamName}
               onChange={(event) => setTeamName(event.target.value)}
-              style={{ background: "#0B2D45", color: "#DEB992" }}
+              style={{
+                background: "#0B2D45",
+                color: "#DEB992",
+                borderTop: "none",
+                borderRight: "none",
+                borderLeft: "none",
+                marginBottom: "20px",
+              }}
             />
-            <label>Description</label>
+            <label style={labelStyle}>Description</label>
             <input
               autoFocus
               margin='dense'
@@ -227,12 +254,31 @@ const CreateTeamOverlay = () => {
               type='text'
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              style={{ background: "#0B2D45", color: "#DEB992" }}
+              style={{
+                background: "#0B2D45",
+                color: "#DEB992",
+                borderTop: "none",
+                borderRight: "none",
+                borderLeft: "none",
+                marginBottom: "20px",
+              }}
             />
           </div>
-          <p style={{ color: "#DEB992", textAlign: "center" }}>
+          <h2
+            style={{
+              color: "#DEB992",
+              textAlign: "center",
+              fontFamily: "Inter",
+              fontStyle: "normal",
+              fontWeight: "800",
+              fontSize: "2rem",
+              lineHeight: "64px",
+              fontFeatureSettings: "'salt' on",
+              fontFeatureSettings: "'liga' off",
+            }}
+          >
             Select Members
-          </p>
+          </h2>
           <FormControl fullWidth>
             <div
               style={{
@@ -244,9 +290,12 @@ const CreateTeamOverlay = () => {
               <select
                 style={{
                   width: "80%",
+                  height: "36px",
                   border: "1px solid rgba(0, 0, 0, 0.1)",
                   borderRadius: "8px",
                   marginBottom: "10px",
+                  fontFamily: "Fira Sans",
+                  color: "#5533FF",
                 }}
                 value={selectValue}
                 labelId='select-label'
@@ -257,12 +306,20 @@ const CreateTeamOverlay = () => {
                 <option
                   value='Pick an option'
                   disabled
-                  style={{ color: "#5533FF", background: "#FFF" }}
+                  style={{
+                    display: "none",
+                    color: "#5533FF",
+                    background: "#FFF",
+                  }}
                 >
                   Pick an option
                 </option>
                 {company?.employees?.map((employee) => (
-                  <option key={employee.id} value={JSON.stringify(employee)}>
+                  <option
+                    key={employee.id}
+                    value={JSON.stringify(employee)}
+                    style={{ color: "#000" }}
+                  >
                     {employee.profile.firstName}{" "}
                     {employee.profile.lastName?.slice(0, 1)}.
                   </option>
@@ -332,11 +389,8 @@ const CreateTeamOverlay = () => {
               background: "#1ba098",
               borderRadius: "10.2875px",
               border: "1px",
-              // text-transform: uppercase;
-              // letter-spacing: 1px;
               padding: "12px 45px",
               margin: "30px 0",
-              // font-weight: bold;
               cursor: "pointer",
               color: "rgba(255, 255, 255, 0.75)",
             }}
@@ -344,6 +398,9 @@ const CreateTeamOverlay = () => {
           >
             Submit
           </button>
+          {error.isError ? (
+            <p style={{ color: "red" }}>{error.message}</p>
+          ) : null}
         </div>
       </Dialog>
     </>

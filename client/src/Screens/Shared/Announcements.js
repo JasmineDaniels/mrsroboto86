@@ -29,13 +29,16 @@ const Announcements = () => {
   const resetError = () => setFormError(errorState)
 
   const btnstyle = {
+    position: "absolute",
+    bottom: "20px",
+    right: "20px",
     margin: "2px 0",
     background: "#1BA098",
-    color: "#FFFFFF",
-    border: "1px solid #1ba098",
-    borderRadius: "5%",
-    width: "6vw",
-    height: "5vh",
+    color: "rgba(255, 255, 255, 0.75)",
+    borderRadius: "10.2875px",
+    boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
+    width: "103px",
+    height: "32px",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -47,11 +50,10 @@ const Announcements = () => {
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "row",
-    fontSize: "4rem",
+    fontSize: "3rem",
     marginTop: "1%",
-    width: "40vw",
-    height: "10vh",
-    borderBottom: "2px solid #DEB992",
+    width: "80%",
+    fontWeight: "400",
   }
 
   const Container = styled.div`
@@ -108,8 +110,9 @@ const Announcements = () => {
     border: "none",
     borderBottom: "2px solid #deb992",
     padding: "7px 15px",
-    margin: "5px 0",
-    width: "90%",
+    margin: "5px auto",
+    width: "70%",
+
     color: "#deb992",
     "&::placeholder": {
       color: "#deb992",
@@ -134,7 +137,7 @@ const Announcements = () => {
   `
 
   const StyledModal = {
-    background: "#051622",
+    background: "rgb(2, 9, 13, 0.5)",
 
     // position: "absolute",
     // top: "50%",
@@ -192,19 +195,17 @@ const Announcements = () => {
   }
 
   if (!user.isLoggedIn) {
-    return <Navigate replace to="/" />
+    return <Navigate replace to='/' />
   } else {
     return (
       <>
         <NavBar />
         <div
           style={{
-            // marginTop: "10vh",
             backgroundColor: "#051622",
             width: "100vw",
-            height: "100vh",
-            overflowX: "hidden",
-            overflowY: "auto",
+            minHeight: "100%",
+            
           }}
         >
           <Box
@@ -223,30 +224,31 @@ const Announcements = () => {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "top",
-                fontSize: "3em",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                position: "relative",
+                width: "70%",
                 marginTop: "2%",
+                marginBottom: "40px",
+                borderBottom: "1px solid #DEB992",
               }}
             >
               {user.isAdmin && (
-                <Button
-                  type="submit"
-                  color="primary"
-                  variant="contained"
+                <button
+                  type='submit'
                   style={btnstyle}
                   onClick={() => handleNewAnnoucement()}
                 >
                   New
-                </Button>
+                </button>
               )}
               <h1 style={h1Style}> Announcements</h1>
             </div>
           </Box>
-          <GridContainer>
+          <GridContainer style={{ paddingBottom: '100px'}}>
             {compAnnouncements.map((announcement) => (
               <GridItem key={announcement.id}>
-                <Container>
+                <Container style={{ width: "50%" }}>
                   <Paragraph>
                     {announcement.author.profile.firstName}{" "}
                     {announcement.author.profile.lastName}
@@ -267,18 +269,36 @@ const Announcements = () => {
             PaperProps={{
               sx: {
                 width: "45%",
-                height: "30%",
-                backgroundColor: "#051622",
+                backgroundColor: "#0B2D45",
               },
             }}
             sx={StyledModal}
             open={openNewDialog}
             onClose={() => setOpenNewDialog(false)}
           >
+            <button
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                width: "30px",
+                height: "30px",
+                color: "#F24E1E",
+                border: "4px solid #F24E1E",
+                borderRadius: "50%",
+                background: "none",
+                fontWeight: "bolder",
+                fontSize: "1rem",
+                cursor: "pointer",
+              }}
+              // onClick={}
+            >
+              X
+            </button>
             <DialogTitle style={Title}>Create new announcement</DialogTitle>
             <TextField
               style={textfieldStyle}
-              label="Title"
+              label='Title'
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               fullWidth
@@ -291,7 +311,7 @@ const Announcements = () => {
             />
             <TextField
               style={textfieldStyle}
-              label="Message"
+              label='Message'
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               fullWidth
@@ -302,9 +322,22 @@ const Announcements = () => {
                 style: { color: "#DEB992" },
               }}
             />
-            <DialogActions>
-              <Button onClick={() => saveAnnoucement()}>Submit</Button>
-            </DialogActions>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <button
+                onClick={() => saveAnnoucement()}
+                style={{
+                  background: "#1ba098",
+                  borderRadius: "10.2875px",
+                  border: "1px",
+                  padding: "12px 45px",
+                  margin: "30px 0",
+                  cursor: "pointer",
+                  color: "rgba(255, 255, 255, 0.75)",
+                }}
+              >
+                Submit
+              </button>
+            </div>
             {formError.isError && !formError.field ? (
               <p
                 style={{
