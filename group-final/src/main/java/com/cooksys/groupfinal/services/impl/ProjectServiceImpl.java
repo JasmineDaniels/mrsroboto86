@@ -4,18 +4,22 @@ import com.cooksys.groupfinal.dtos.BasicUserDto;
 import com.cooksys.groupfinal.dtos.ProjectDto;
 import com.cooksys.groupfinal.entities.Project;
 import com.cooksys.groupfinal.entities.Team;
+import com.cooksys.groupfinal.entities.User;
 import com.cooksys.groupfinal.exceptions.BadRequestException;
 import com.cooksys.groupfinal.exceptions.NotAuthorizedException;
 import com.cooksys.groupfinal.exceptions.NotFoundException;
 import com.cooksys.groupfinal.mappers.ProjectMapper;
 import com.cooksys.groupfinal.repositories.ProjectRepository;
 import com.cooksys.groupfinal.repositories.TeamRepository;
+import com.cooksys.groupfinal.repositories.UserRepository;
 import com.cooksys.groupfinal.services.ProjectService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.Check;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.Convert;
 import java.util.*;
 
 @Service
@@ -26,7 +30,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectMapper projectMapper;
 
     private final TeamRepository teamRepository;
-
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
 
@@ -50,21 +54,35 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectDto createProject(Map<String, Object> json) {
+
+        //Convert JSON data to Data Transfer Object
         BasicUserDto basicUserDto = objectMapper.convertValue(json.get("user"), new TypeReference<BasicUserDto>() {});
         ProjectDto projectDto = objectMapper.convertValue(json.get("project"), new TypeReference<ProjectDto>() {});
 
+        //Check for null user and project values
         if(basicUserDto == null  || projectDto == null){
             throw new BadRequestException("Project & User cannot be null");
-        }
-
-        if(!basicUserDto.isAdmin()){
-            throw new NotAuthorizedException("You are not authorized to do this action.");
         }
 
         if (projectDto.getTeam() == null || projectDto.getTeam().getId() == null){
             throw new BadRequestException("The given team must not be null");
         }
 
+        //Check if the project author exists in DB
+        Optional<User> optionalUser = userRepository.findById(basicUserDto.getId());
+
+        if (optionalUser.isEmpty()){
+            throw new NotFoundException("No user exists with this id:" + basicUserDto.getId());
+        }
+
+        User user = optionalUser.get();
+
+        //Check if the project author is an Administrator
+        if(!user.isAdmin()){
+            throw new NotAuthorizedException("You are not authorized to do this action.");
+        }
+
+        //Check if the Team Exists
         if(teamRepository.findById(projectDto.getTeam().getId()).isPresent()){
             Team team = teamRepository.findById(projectDto.getTeam().getId()).get();
 
