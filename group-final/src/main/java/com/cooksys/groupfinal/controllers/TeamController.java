@@ -16,6 +16,12 @@ public class TeamController {
 
 	private final TeamService teamService;
 
+	@GetMapping("/{teamId}")
+	@CrossOrigin(origins="*")
+	public TeamDto getTeamByTeamId(@PathVariable Long teamId){
+		return teamService.getTeamByTeamId(teamId);
+	}
+
 	@GetMapping("/user/{id}")
 	@CrossOrigin(origins="*")
 	public Set<TeamDto> getTeams(@PathVariable Long id) {

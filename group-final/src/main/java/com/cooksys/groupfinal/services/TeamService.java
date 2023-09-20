@@ -11,5 +11,6 @@ public interface TeamService {
 	TeamDto createTeam(Long authorId, Long companyId, TeamDto teamRequestDto);
 
 	TeamDto deleteTeam(Long id);
-	
+
+    TeamDto getTeamByTeamId(Long teamId);
 }
